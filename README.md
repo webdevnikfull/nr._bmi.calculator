@@ -4,7 +4,7 @@
 
 > **About the project:** BMI Calculator is an interactive, lightweight web application designed to calculate Body Mass Index and provide immediate health status feedback. This repository serves as a core artifact in my Quality Assurance (QA) portfolio, showcasing a "Shift-Left" testing approach. It demonstrates clean JavaScript architecture, unit testing, internationalization (i18n), and comprehensive test documentation[cite: 17].
 
-[Open app ↗]()
+[Open app ↗](https://webdevnikfull.github.io/nr._bmi.calculator/)
 
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
