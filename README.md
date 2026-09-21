@@ -1,77 +1,48 @@
-# BMI Calculator
+# ⚖️ BMI Calculator - Health Metric App & QA Portfolio
 
-Samodzielny projekt do portfolio Nikity Rysieva. Interfejs w bieli, granacie i lawendzie, dopasowany do karty BMI Calculator. Czysty HTML, CSS i JavaScript — bez frameworka, instalacji pakietów, zewnętrznych fontów i procesu budowania.
+![BMI Calculator App](banner.png)
 
-## Uruchomienie
+> **About the project:** BMI Calculator is an interactive, lightweight web application designed to calculate Body Mass Index and provide immediate health status feedback. This repository serves as a core artifact in my Quality Assurance (QA) portfolio, showcasing a "Shift-Left" testing approach. It demonstrates clean JavaScript architecture, unit testing, internationalization (i18n), and comprehensive test documentation[cite: 17].
 
-Rozpakuj ZIP i otwórz `bmi-calculator/index.html` w przeglądarce. Do lokalnego podglądu przez HTTP możesz też użyć Pythona, uruchamiając w folderze projektu:
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![Unit Testing](https://img.shields.io/badge/Unit_Testing-C21325?style=for-the-badge&logo=jest&logoColor=white)
 
-```sh
-python -m http.server 8770
-```
+## ✨ Core Features
 
-Następnie otwórz `http://localhost:8770`. Kopiowanie wyniku korzysta z systemowego schowka i działa w bezpiecznym kontekście HTTPS lub localhost. Jeżeli przeglądarka blokuje schowek, aplikacja wyświetla komunikat z możliwością ręcznego skopiowania tekstu.
+* **Precise Calculations:** Accurately computes Body Mass Index based on user height and weight inputs.
+* **Health Status Classification:** Dynamically categorizes results (e.g., Underweight, Normal, Overweight, Obese) based on mathematical thresholds.
+* **Multi-language Support (i18n):** Seamlessly switchable user interface languages for global accessibility[cite: 17].
+* **Form Validation:** Prevents invalid inputs (negative numbers, strings, empty fields) with real-time user feedback.
+* **Responsive UI:** Clean, mobile-friendly design ensuring a great user experience across devices[cite: 17].
 
-## Podłączenie do portfolio
+## 🧪 QA Approach & Test Structure
 
-Przenieś cały folder `bmi-calculator` do katalogu `projects` na swoim hostingu. W przycisku „Otwórz aplikację” możesz użyć:
+As a QA Automation Engineer, I prioritized code testability, edge-case handling, and rigorous business logic verification:
 
-```html
-<a href="./projects/bmi-calculator/" target="_blank" rel="noopener noreferrer">
-  Otwórz aplikację ↗
-</a>
-```
+* **QA Documentation:** Comprehensive manual test scenarios, edge cases (e.g., extreme values, zero inputs, non-numeric characters), and exploratory findings are detailed in the `QA.md` report[cite: 17].
+* **Unit Testing:** The core calculation logic and state management are strictly verified through automated unit tests located in `tests/model.test.cjs`[cite: 17].
+* **Architecture for Testability:** The codebase purposefully separates the business logic layer (`model.js`, `translations.js`)[cite: 17] from the DOM manipulation layer (`app.js`)[cite: 17]. This MVC-like separation allows for highly isolated, reliable automated testing.
 
-Wszystkie zasoby mają względne ścieżki, więc projekt działa również w podkatalogu. Nie wymaga zmian w głównej stronie. W produkcji użyj HTTPS. Pliki dokumentacji i folder `tests` możesz pozostawić w repozytorium; do działania aplikacji wystarczy sześć plików wymienionych niżej.
+## 📂 Repository Architecture
 
-## Struktura
+* `index.html` / `styles.css` – Semantic markup and modern styling for the application interface[cite: 17].
+* `app.js` – Main view controller, handling DOM events and user interactions[cite: 17].
+* `model.js` – Business logic model responsible for mathematical BMI calculations and state validation[cite: 17].
+* `translations.js` – Internationalization module containing multi-language dictionaries[cite: 17].
+* `tests/model.test.cjs` – Automated unit test suite verifying the mathematical accuracy and error handling of the model[cite: 17].
+* `QA.md` – Professional QA documentation containing bug reports and test execution summaries[cite: 17].
 
-```text
-bmi-calculator/
-├── index.html          struktura i semantyka
-├── styles.css          wygląd, stany i responsywność
-├── app.js              interakcje, formularz i zmiana języka
-├── model.js            obliczenia, konwersja i walidacja
-├── translations.js     PL / EN / DE / ES / FR / UK / RU
-├── favicon.svg         znak aplikacji
-├── README.md
-├── QA.md               scenariusze i zakres weryfikacji
-└── tests/
-    └── model.test.cjs   testy bez zewnętrznych zależności
-```
+## 🚀 Running the Local Environment
 
-## Funkcje
+To run the application and execute the test suite locally, follow these steps:
 
-- Obliczanie BMI oraz prezentacja kategorii, pomiarów i wyniku z trzema miejscami po przecinku.
-- Jednostki metryczne (cm/kg) i imperialne (cale/funty), konwersja z zachowaniem dokładnych wartości w pamięci.
-- Siedem języków, lokalny format liczb i zapamiętywanie wyłącznie wybranego języka.
-- Walidacja pustych pól, zer, niepoprawnych liczb i zakresów; obsługa kropki lub przecinka dziesiętnego.
-- Zmiana pomiaru od razu ukrywa poprzedni wynik, aby nie przedstawiać nieaktualnego obliczenia.
-- Czyszczenie formularza, przykładowe dane, kopiowanie wyniku i rozwijane wyjaśnienie wzoru.
-- Widoki telefonu, tabletu i komputera, obsługa klawiatury, etykiety pól, komunikaty dla czytników ekranu oraz respektowanie ograniczenia animacji.
+### 1. Launching the App
+The application is built with Vanilla JavaScript and requires no build steps. Clone the repository and open `index.html` in your preferred modern web browser (using a *Live Server* extension is recommended for the best experience).
 
-## Zasady obliczeń
-
-`BMI = masa [kg] / wzrost [m]²`. Dokładne przeliczniki: `1 in = 2,54 cm`, `1 lb = 0,45359237 kg`.
-
-Kategorie dla dorosłych od 20. roku życia: poniżej 18,5; od 18,5 do poniżej 25; od 25 do poniżej 30; od 30. Klasyfikacja wykorzystuje wynik **przed zaokrągleniem**. Duża liczba ma jedno miejsce po przecinku, dodatkowa wartość trzy. Przy granicy kategorii obie wartości mogą wizualnie zaokrąglić się do progu — wyjaśnia to notatka przy wyniku.
-
-Źródło: [CDC — Adult BMI Categories](https://www.cdc.gov/bmi/adult-calculator/bmi-categories.html). BMI jest wskaźnikiem przesiewowym, nie diagnozą. Aplikacja nie służy do oceny dzieci ani masy ciała w ciąży i nie generuje zaleceń leczenia.
-
-Zakresy techniczne formularza to 50–260 cm i 10–500 kg; nie są to zakresy zalecanej masy ciała. Model dopuszcza tolerancję `0,000001` przy porównywaniu limitów, aby uniknąć błędów zmiennoprzecinkowych konwersji. Skala wizualna obejmuje BMI 12–40; dla wartości poza nią znacznik zostaje na odpowiednim końcu, a wynik liczbowy pozostaje pełny.
-
-## Prywatność
-
-Pomiary są przetwarzane wyłącznie w pamięci przeglądarki. Nie ma backendu, analityki, wysyłania formularza ani zapisu pomiarów. Odświeżenie przywraca jawnie oznaczony przykład 180 cm / 72,5 kg. `localStorage` zawiera tylko preferencję języka pod kluczem `nr-bmi-language`. Kliknięcie przycisku kopiowania zapisuje wynik w schowku użytkownika.
-
-## Testy
-
-Wymagany Node.js 18 lub nowszy. W katalogu projektu:
-
-```sh
-node tests/model.test.cjs
-```
-
-Wynik przygotowanej wersji: **12 testów zaliczonych**. Scenariusze interfejsu i zakres sprawdzenia opisuje `QA.md`.
-
-Projekt korzysta z funkcji współczesnych przeglądarek, m.in. `Intl.NumberFormat`, CSS Grid i `Object.hasOwn`. Weryfikację interfejsu wykonano w przeglądarce wbudowanej w Codex; testy na rzeczywistym Safari/iOS, Firefox i Androidzie pozostają do wykonania przed publikacją na docelowym hostingu.
+### 2. Running Automated Tests
+Ensure you have **Node.js** installed on your machine. Open your terminal in the project root directory and execute:
+```bash
+npm install
+npm test
