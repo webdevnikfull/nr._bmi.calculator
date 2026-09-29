@@ -51,5 +51,10 @@
     return from === 'metric' ? n / factors[kind] : n * factors[kind];
   }
 
-  return Object.freeze({ parse, category, calculate, convert });
+  function weightAtBmi(height, value) {
+    const h=parse(height), bmi=parse(value);
+    if(h<50 || h>260)throw new Error('heightRange');
+    return Math.max(10,Math.min(500,bmi*(h/100)**2));
+  }
+  return Object.freeze({ parse, category, calculate, convert, weightAtBmi });
 });

@@ -18,7 +18,9 @@
   let sample = true;
   let dirty = false;
   let errors = {};
-  let toastTimer;
+  let toastTimer, liveTimer, simulationBase=null, valueFrame;
+  let displayedBMI=result.bmi;
+  const motionPreference=matchMedia("(prefers-reduced-motion: reduce)");
   // Remember exact values only in memory. Unit toggles must not accumulate rounding.
   const exact = { height: null, weight: null };
 
@@ -38,7 +40,7 @@
 
   function writeField(kind, metricValue) {
     const displayedValue = unit === 'metric' ? metricValue : metricValue / factors[kind];
-    fields[kind].value = number(displayedValue, 6);
+    fields[kind].value = number(displayedValue, 2);
     exact[kind] = { text: fields[kind].value, metric: metricValue };
   }
 
@@ -60,6 +62,19 @@
   }
 
   function renderFields() {
+    for (const kind of Object.keys(fields)) {
+      const slider=$(`#${kind}-range`);
+      let value;
+      try { value=BMI.parse(modelValue(kind)); } catch { value=null; }
+      const valid=value!==null && value>=limits[kind][0] && value<=limits[kind][1];
+      if(valid)slider.value=value;
+      slider.setAttribute('aria-valuetext',valid?`${number(unit==='metric'?value:value/factors[kind],2)} ${unitName(kind)}`:t('required'));
+      slider.style.setProperty('--fill',`${(Number(slider.value)-limits[kind][0])/(limits[kind][1]-limits[kind][0])*100}%`);
+      document.querySelectorAll(`[data-adjust="${kind}"]`).forEach(button=>{
+        button.setAttribute('aria-label',`${t(button.dataset.direction==='1'?'increase':'decrease')} · ${t(kind)}`);
+        button.disabled=!valid;
+      });
+    }
     document.querySelectorAll('[data-unit]').forEach(button => {
       button.setAttribute('aria-pressed', String(button.dataset.unit === unit));
     });
@@ -76,16 +91,28 @@
   function renderResult() {
     $('#result').hidden = !result;
     $('#empty-result').hidden = Boolean(result);
-    $('#example-label').hidden = !sample || !result;
+    $('#example-label').hidden = (!sample && !simulationBase) || !result;
+    $('#example-label').textContent=t(simulationBase?'simulation':'sample');
+    $('#restore').hidden=!simulationBase;
+    $('#bmi-range').disabled=!result;
     $('#copy').disabled = !result;
     $('#result-status').textContent = t(result ? (sample ? 'sampleStatus' : 'readyStatus') : (dirty ? 'dirtyStatus' : 'emptyStatus'));
     document.querySelectorAll('[data-category]').forEach(card => {
       card.dataset.active = String(result?.category === card.dataset.category);
     });
-    if (!result) return;
+    if (!result) {cancelAnimationFrame(valueFrame);return;}
 
     const formatted = number(result.bmi, 1, 1);
-    $('#bmi-value').textContent = formatted;
+    cancelAnimationFrame(valueFrame);
+    const from=displayedBMI, target=result.bmi;
+    if(motionPreference.matches || Math.abs(from-target)<.2) {displayedBMI=target;$('#bmi-value').textContent=formatted;}
+    else {
+      const start=performance.now();
+      const tick=now=>{const progress=Math.min(1,(now-start)/300);displayedBMI=from+(target-from)*(1-(1-progress)**3);$('#bmi-value').textContent=number(displayedBMI,1,1);if(progress<1)valueFrame=requestAnimationFrame(tick);};
+      valueFrame=requestAnimationFrame(tick);
+    }
+    $('#bmi-range').value=Math.max(12,Math.min(40,result.bmi));
+    $('#bmi-range').setAttribute('aria-valuetext',`${formatted} · ${t(result.category)}`);
     $('.result-number').dataset.long = String(formatted.length > 5);
     $('#category').textContent = t(result.category);
     $('#category').style.setProperty('--category-color', `var(--${result.category})`);
@@ -116,6 +143,9 @@
   function applyLanguage() {
     document.documentElement.lang = language;
     $('#language').value = language;
+    $('#language-name').textContent=$('#language').selectedOptions[0].textContent;
+    $('.language-menu summary').setAttribute('aria-label',`${t('language')}: ${$('#language-name').textContent}`);
+    document.querySelectorAll('[data-language]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.language===language)));
     $('#language').setAttribute('aria-label', t('language'));
     $('.units').setAttribute('aria-label', t('units'));
     document.querySelector('meta[name="description"]').content = t('meta');
@@ -137,6 +167,7 @@
 
   $('#bmi-form').addEventListener('submit', event => {
     event.preventDefault();
+    clearTimeout(liveTimer);simulationBase=null;
     const next = readResult();
     errors = next.ok ? {} : next.errors;
     result = next.ok ? next : null;
@@ -159,6 +190,7 @@
 
   for (const [kind, field] of Object.entries(fields)) {
     field.addEventListener('input', () => {
+      clearTimeout(liveTimer);simulationBase=null;
       exact[kind] = null;
       delete errors[kind];
       result = null;
@@ -166,6 +198,7 @@
       dirty = true;
       renderFields();
       renderResult();
+      if($('#live').checked)liveTimer=setTimeout(()=>commitLive(),220);
     });
   }
 
@@ -193,6 +226,7 @@
   });
 
   $('#reset').addEventListener('click', () => {
+    clearTimeout(liveTimer);simulationBase=null;
     for (const kind of Object.keys(fields)) { fields[kind].value = ''; exact[kind] = null; }
     result = null;
     errors = {};
@@ -205,6 +239,7 @@
   });
 
   $('#example').addEventListener('click', () => {
+    clearTimeout(liveTimer);simulationBase=null;
     unit = 'metric';
     writeField('height', 180);
     writeField('weight', 72.5);
@@ -226,10 +261,50 @@
 
   $('#copy').addEventListener('click', async () => {
     if (!result) return;
-    const text = `${t('bmiTitle')}: ${number(result.bmi, 1, 1)} kg/m²\n${t(result.category)}\n${t('height')}: ${$('#result-height').textContent}\n${t('weight')}: ${$('#result-weight').textContent}\n${t('adult')}\n${t('medical')}`;
+    const text = `${simulationBase?t('simulation')+'\n':''}${t('bmiTitle')}: ${number(result.bmi, 1, 1)} kg/m²\n${t(result.category)}\n${t('height')}: ${$('#result-height').textContent}\n${t('weight')}: ${$('#result-weight').textContent}\n${t('adult')}\n${t('medical')}`;
     try { await navigator.clipboard.writeText(text); toast('copied'); }
     catch { toast('copyFailed'); }
   });
 
+  function commitLive(shouldAnnounce=true) {
+    const next=readResult();result=next.ok?next:null;errors=next.ok?{}:next.errors;sample=false;dirty=!next.ok;
+    renderFields();renderResult();
+    if(shouldAnnounce && next.ok)announce(t('calculated',{value:number(next.bmi,1,1),category:t(next.category)}));
+  }
+  $('#live').addEventListener('change',()=>{clearTimeout(liveTimer);if($('#live').checked)commitLive();});
+  for(const kind of Object.keys(fields)) {
+    $(`#${kind}-range`).addEventListener('input',event=>{
+      clearTimeout(liveTimer);simulationBase=null;writeField(kind,Number(event.target.value));sample=false;
+      if($('#live').checked)commitLive(false);else {result=null;dirty=true;renderFields();renderResult();}
+    });
+    $(`#${kind}-range`).addEventListener('change',()=>{if($('#live').checked)commitLive();});
+  }
+  document.querySelectorAll('[data-adjust]').forEach(button=>button.addEventListener('click',()=>{
+    const kind=button.dataset.adjust;clearTimeout(liveTimer);simulationBase=null;
+    const step=(kind==='height'?1:.5)*(unit==='metric'?1:factors[kind]);
+    const value=Math.max(limits[kind][0],Math.min(limits[kind][1],BMI.parse(modelValue(kind))+step*Number(button.dataset.direction)));
+    writeField(kind,value);sample=false;
+    if($('#live').checked)commitLive();else {result=null;dirty=true;renderFields();renderResult();}
+  }));
+  $('#bmi-range').addEventListener('input',event=>{
+    if(!result)return;
+    clearTimeout(liveTimer);
+    if(!simulationBase)simulationBase={height:result.height,weight:result.weight,sample};
+    writeField('weight',BMI.weightAtBmi(result.height,Number(event.target.value)));
+    commitLive(false);
+  });
+  $('#bmi-range').addEventListener('change',()=>{if(result)announce(t('calculated',{value:number(result.bmi,1,1),category:t(result.category)}));});
+  $('#restore').addEventListener('click',()=>{
+    if(!simulationBase)return;
+    const previous=simulationBase;simulationBase=null;
+    writeField('height',previous.height);writeField('weight',previous.weight);commitLive();sample=previous.sample;renderResult();$('#bmi-range').focus();
+  });
+  document.querySelectorAll('[data-language]').forEach(button=>button.addEventListener('click',()=>{
+    $('#language').value=button.dataset.language;$('#language').dispatchEvent(new Event('change'));$('.language-menu').open=false;$('.language-menu summary').focus();
+  }));
+  document.addEventListener('click',event=>{if(!event.target.closest('.language-menu'))$('.language-menu').open=false;});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape' && $('.language-menu').open){$('.language-menu').open=false;$('.language-menu summary').focus();}});
+  $('.language-menu').addEventListener('focusout',event=>{if(!$('.language-menu').contains(event.relatedTarget))$('.language-menu').open=false;});
+  motionPreference.addEventListener('change',()=>{if(motionPreference.matches){cancelAnimationFrame(valueFrame);if(result){displayedBMI=result.bmi;$('#bmi-value').textContent=number(result.bmi,1,1);}}});
   applyLanguage();
 })();
